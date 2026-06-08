@@ -11,7 +11,7 @@ export default function NewCost() {
   const [lands, setLands] = useState<any[]>([])
   const [seasons, setSeasons] = useState<any[]>([])
   const [landId, setLandId] = useState(params.get('land') ?? '')
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState(params.get('cat') ?? '')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [description, setDescription] = useState('')

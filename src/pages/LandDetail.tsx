@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { COST_CATEGORIES } from '../lib/i18n'
-import { ArrowRight, Plus } from 'lucide-react'
+import { ArrowRight, Plus, Wheat, DollarSign } from 'lucide-react'
 import { format } from 'date-fns'
 
 export default function LandDetail() {
@@ -11,17 +11,20 @@ export default function LandDetail() {
   const [land, setLand] = useState<any>(null)
   const [seasons, setSeasons] = useState<any[]>([])
   const [costs, setCosts] = useState<any[]>([])
+  const [showHarvest, setShowHarvest] = useState(false)
+  const [tonnes, setTonnes] = useState('')
+  const [pricePerTonne, setPricePerTonne] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
+  const load = () => {
     if (!id) return
     Promise.all([
       supabase.from('farm_lands').select('*').eq('id', id).single(),
       supabase.from('farm_seasons').select('*').eq('land_id', id).order('year', { ascending: false }),
       supabase.from('farm_costs').select('*').eq('land_id', id).order('date', { ascending: false }),
-    ]).then(([l, s, c]) => {
-      setLand(l.data); setSeasons(s.data ?? []); setCosts(c.data ?? [])
-    })
-  }, [id])
+    ]).then(([l, s, c]) => { setLand(l.data); setSeasons(s.data ?? []); setCosts(c.data ?? []) })
+  }
+  useEffect(() => { load() }, [id])
 
   if (!land) return <div className="p-4 text-farm-dim">جاري التحميل...</div>
 
@@ -29,10 +32,24 @@ export default function LandDetail() {
   const currentSeason = seasons[0]
   const revenue = Number(currentSeason?.total_revenue ?? 0)
   const profit = revenue - totalCost
+  const harvestRecorded = Number(currentSeason?.harvest_tonnes ?? 0) > 0
 
   // Costs by category
   const byCat: Record<string, number> = {}
   costs.forEach(c => { byCat[c.category] = (byCat[c.category] ?? 0) + Number(c.amount) })
+
+  const recordHarvest = async () => {
+    if (!currentSeason || !tonnes || !pricePerTonne) return
+    setSaving(true)
+    await supabase.from('farm_seasons').update({
+      harvest_tonnes: parseFloat(tonnes),
+      sale_price_per_tonne: parseFloat(pricePerTonne),
+      harvest_date: format(new Date(), 'yyyy-MM-dd'),
+      status: 'completed',
+    }).eq('id', currentSeason.id)
+    setSaving(false); setShowHarvest(false)
+    load()
+  }
 
   return (
     <div className="p-4 space-y-4">
@@ -58,11 +75,32 @@ export default function LandDetail() {
         </div>
       </div>
 
-      {/* Add cost button */}
-      <Link to={`/costs/new?land=${id}`} className="card flex items-center gap-3 border-farm-green/30 hover:border-farm-green transition-colors">
-        <div className="w-10 h-10 rounded-full bg-farm-green/15 flex items-center justify-center"><Plus size={18} className="text-farm-green" /></div>
-        <p className="text-farm-steel text-sm font-bold">إضافة مصروف على هذه الأرض</p>
-      </Link>
+      {/* Action buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link to={`/costs/new?land=${id}`} className="card flex items-center gap-2 py-3 border-farm-green/30 hover:border-farm-green transition-colors">
+          <Plus size={16} className="text-farm-green" />
+          <span className="text-farm-steel text-sm font-bold">إضافة مصروف</span>
+        </Link>
+        <button onClick={() => { setTonnes(''); setPricePerTonne(''); setShowHarvest(true) }} className="card flex items-center gap-2 py-3 border-yellow-500/30 hover:border-yellow-500 transition-colors text-right">
+          <Wheat size={16} className="text-yellow-400" />
+          <span className="text-farm-steel text-sm font-bold">{harvestRecorded ? 'تعديل الحصاد' : 'تسجيل الحصاد'}</span>
+        </button>
+      </div>
+
+      {/* Harvest info */}
+      {harvestRecorded && (
+        <div className="card border-yellow-500/20 bg-yellow-500/5">
+          <div className="flex items-center gap-2 mb-2">
+            <Wheat size={16} className="text-yellow-400" />
+            <p className="text-farm-steel text-sm font-bold">الحصاد</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div><p className="text-farm-steel font-black">{Number(currentSeason.harvest_tonnes)} طن</p><p className="text-farm-dim text-[10px]">الكمية</p></div>
+            <div><p className="text-farm-steel font-black">${Number(currentSeason.sale_price_per_tonne)}/طن</p><p className="text-farm-dim text-[10px]">سعر البيع</p></div>
+            <div><p className="text-farm-green font-black">${revenue.toLocaleString()}</p><p className="text-farm-dim text-[10px]">الإجمالي</p></div>
+          </div>
+        </div>
+      )}
 
       {/* Cost breakdown */}
       {Object.keys(byCat).length > 0 && (
@@ -74,11 +112,11 @@ export default function LandDetail() {
               const pct = totalCost > 0 ? (amount / totalCost * 100) : 0
               return (
                 <div key={cat} className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center">{info?.icon ?? '📋'}</span>
+                  <span className="text-base w-7 text-center">{info?.icon ?? '📋'}</span>
                   <div className="flex-1">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs">
                       <span className="text-farm-steel font-bold">{info?.label ?? cat}</span>
-                      <span className="text-farm-dim">${amount.toLocaleString()}</span>
+                      <span className="text-farm-dim">${amount.toLocaleString()} ({pct.toFixed(0)}%)</span>
                     </div>
                     <div className="h-1.5 bg-farm-elevated rounded-full mt-1">
                       <div className="h-full bg-farm-green/50 rounded-full" style={{ width: `${pct}%` }} />
@@ -99,16 +137,38 @@ export default function LandDetail() {
           const info = COST_CATEGORIES.find(cat => cat.key === c.category)
           return (
             <div key={c.id} className="card mb-2 flex items-center gap-3">
-              <span className="text-lg">{info?.icon ?? '📋'}</span>
+              <span className="text-base">{info?.icon ?? '📋'}</span>
               <div className="flex-1">
                 <p className="text-farm-steel text-sm font-bold">{info?.label ?? c.category}</p>
-                <p className="text-farm-dim text-xs">{c.description ?? ''} · {format(new Date(c.date), 'dd/MM/yyyy')}</p>
+                <p className="text-farm-dim text-[10px]">{c.description ?? ''} · {format(new Date(c.date), 'dd/MM/yyyy')}</p>
               </div>
-              <p className="text-red-400 font-black text-sm">${Number(c.amount).toLocaleString()}</p>
+              <p className="text-red-400 font-bold text-sm">${Number(c.amount).toLocaleString()}</p>
             </div>
           )
         })}
       </div>
+
+      {/* Harvest Modal */}
+      {showHarvest && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setShowHarvest(false)}>
+          <div className="card w-full max-w-sm space-y-4" onClick={e => e.stopPropagation()}>
+            <h2 className="text-farm-steel font-black text-lg flex items-center gap-2"><Wheat size={20} className="text-yellow-400" /> تسجيل الحصاد</h2>
+            <p className="text-farm-dim text-xs">{land.name} — {land.current_crop}</p>
+            <div><label className="label-f">كمية الحصاد (طن) *</label><input value={tonnes} onChange={e => setTonnes(e.target.value)} className="input-f" type="number" step="0.1" placeholder="45" /></div>
+            <div><label className="label-f">سعر البيع ($/طن) *</label><input value={pricePerTonne} onChange={e => setPricePerTonne(e.target.value)} className="input-f" type="number" step="0.5" placeholder="300" /></div>
+            {tonnes && pricePerTonne && (
+              <div className="bg-farm-green/10 border border-farm-green/30 rounded-xl p-3 text-center">
+                <p className="text-farm-dim text-xs">الإيرادات المتوقعة</p>
+                <p className="text-farm-green text-2xl font-black">${((parseFloat(tonnes) || 0) * (parseFloat(pricePerTonne) || 0)).toLocaleString()}</p>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <button onClick={recordHarvest} disabled={saving} className="btn-green flex-1">{saving ? 'جاري...' : 'حفظ الحصاد'}</button>
+              <button onClick={() => setShowHarvest(false)} className="px-4 py-2 text-farm-dim font-bold">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="h-8" />
     </div>
