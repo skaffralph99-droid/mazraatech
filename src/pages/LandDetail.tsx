@@ -29,6 +29,7 @@ export default function LandDetail() {
   if (!land) return <div className="p-4 text-farm-dim">جاري التحميل...</div>
 
   const totalCost = costs.reduce((s, c) => s + Number(c.amount), 0)
+  const costPerDunam = Number(land.size_dunams) > 0 ? totalCost / Number(land.size_dunams) : 0
   const currentSeason = seasons[0]
   const revenue = Number(currentSeason?.total_revenue ?? 0)
   const profit = revenue - totalCost
@@ -131,18 +132,23 @@ export default function LandDetail() {
 
       {/* Cost history */}
       <div>
-        <p className="section-title">سجل المصاريف</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="section-title mb-0">سجل المصاريف</p>
+          <p className="text-farm-dim text-[10px]">${costPerDunam.toFixed(1)}/دونم</p>
+        </div>
         {costs.length === 0 && <p className="text-farm-dim text-sm text-center py-8">لا توجد مصاريف مسجلة</p>}
         {costs.map(c => {
           const info = COST_CATEGORIES.find(cat => cat.key === c.category)
           return (
-            <div key={c.id} className="card mb-2 flex items-center gap-3">
+            <div key={c.id} className="card mb-2 flex items-center gap-3 group">
               <span className="text-base">{info?.icon ?? '📋'}</span>
               <div className="flex-1">
                 <p className="text-farm-steel text-sm font-bold">{info?.label ?? c.category}</p>
                 <p className="text-farm-dim text-[10px]">{c.description ?? ''} · {format(new Date(c.date), 'dd/MM/yyyy')}</p>
               </div>
               <p className="text-red-400 font-bold text-sm">${Number(c.amount).toLocaleString()}</p>
+              <button onClick={async (e) => { e.preventDefault(); if (!confirm('حذف هذا المصروف؟')) return; await supabase.from('farm_costs').delete().eq('id', c.id); load() }}
+                className="text-farm-dim hover:text-red-400 transition-colors text-xs opacity-0 group-hover:opacity-100">✕</button>
             </div>
           )
         })}
