@@ -20,7 +20,12 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (loading) return <div className="min-h-screen bg-farm-bg flex items-center justify-center"><div className="text-farm-dim text-sm">جاري التحميل...</div></div>
+  if (loading) return (
+    <div className="min-h-screen bg-farm-bg flex flex-col items-center justify-center">
+      <div className="text-6xl mb-4 animate-float">🌾</div>
+      <p className="text-gradient text-xl font-black tracking-wider">MazraaTech</p>
+    </div>
+  )
   if (!session) return <Login />
 
   return (

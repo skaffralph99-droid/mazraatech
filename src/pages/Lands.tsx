@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { cropIcon, money, CROPS } from '../lib/i18n'
 import { ChevronLeft, Plus, MapPin } from 'lucide-react'
 
 export default function Lands() {
@@ -25,15 +26,16 @@ export default function Lands() {
   const addLand = async () => {
     if (!name.trim() || !size) return
     setSaving(true)
-    await supabase.from('farm_lands').insert({ name: name.trim(), size_dunams: parseFloat(size), current_crop: crop || null, location: location || null })
-    // Also create a season for it
-    const { data } = await supabase.from('farm_lands').select('id').eq('name', name.trim()).single()
-    if (data) await supabase.from('farm_seasons').insert({ land_id: data.id, year: 2026, season: 'summer', crop: crop || 'غير محدد', area_dunams: parseFloat(size) })
+    // Insert and get the new row back directly (no fragile re-query by name)
+    const { data: inserted } = await supabase.from('farm_lands')
+      .insert({ name: name.trim(), size_dunams: parseFloat(size), current_crop: crop || null, location: location.trim() || null })
+      .select('id').single()
+    if (inserted) {
+      await supabase.from('farm_seasons').insert({ land_id: inserted.id, year: 2026, season: 'صيف', crop: crop || 'غير محدد', area_dunams: parseFloat(size) })
+    }
     setSaving(false); setShowAdd(false); setName(''); setSize(''); setCrop(''); setLocation('')
     load()
   }
-
-  const CROP_ICONS: Record<string, string> = { 'بطاطا': '🥔', 'قمح': '🌾', 'بصل': '🧅', 'خضار': '🥬' }
 
   return (
     <div className="p-4 space-y-4">
@@ -54,19 +56,16 @@ export default function Lands() {
       {lands.map((l, i) => {
         const cost = getCost(l.id)
         const costPerDunam = Number(l.size_dunams) > 0 ? cost / Number(l.size_dunams) : 0
+        const meta = [l.current_crop || 'بدون زراعة', `${Number(l.size_dunams)} دونم`, l.ownership === 'rented' ? 'إيجار' : 'ملك'].join(' · ')
         return (
           <Link key={l.id} to={`/lands/${l.id}`} className={`card flex items-center gap-3 hover:border-farm-green/30 hover:-translate-y-0.5 transition-all duration-200 animate-slide-right delay-${Math.min(i + 1, 10)}`}>
-            <div className="w-12 h-12 rounded-xl bg-farm-elevated flex items-center justify-center text-2xl">
-              {CROP_ICONS[l.current_crop] ?? '🌿'}
-            </div>
+            <div className="w-12 h-12 rounded-xl bg-farm-elevated flex items-center justify-center text-2xl shrink-0">{cropIcon(l.current_crop)}</div>
             <div className="flex-1 min-w-0">
               <p className="text-farm-steel font-bold text-sm truncate">{l.name}</p>
-              <p className="text-farm-dim text-[10px]">
-                {l.current_crop ?? 'بدون زراعة'} · {Number(l.size_dunams)} دونم · {l.ownership === 'rented' ? 'إيجار' : 'ملك'}
-              </p>
-              {cost > 0 && <p className="text-red-400/70 text-[10px] mt-0.5">مصاريف: ${cost.toLocaleString()} · ${costPerDunam.toFixed(1)}/دونم</p>}
+              <p className="text-farm-dim text-[10px]">{meta}</p>
+              {cost > 0 && <p className="text-red-400/70 text-[10px] mt-0.5">مصاريف: {money(cost)} · {money(costPerDunam)}/دونم</p>}
             </div>
-            <ChevronLeft size={14} className="text-farm-dim" />
+            <ChevronLeft size={14} className="text-farm-dim shrink-0" />
           </Link>
         )
       })}
@@ -82,23 +81,22 @@ export default function Lands() {
       {/* Add Modal */}
       {showAdd && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowAdd(false)}>
-          <div className="card w-full max-w-sm space-y-4 animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="card w-full max-w-sm space-y-4 animate-scale-in max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h2 className="text-farm-steel font-black text-lg flex items-center gap-2">🌿 أرض جديدة</h2>
             <div><label className="label-f">الاسم *</label><input value={name} onChange={e => setName(e.target.value)} className="input-f" placeholder="أرض المغارة" autoFocus /></div>
-            <div><label className="label-f">المساحة (دونم) *</label><input value={size} onChange={e => setSize(e.target.value)} className="input-f" type="number" placeholder="200" /></div>
-            <div><label className="label-f">المحصول الحالي</label>
+            <div><label className="label-f">المساحة (دونم) *</label><input value={size} onChange={e => setSize(e.target.value)} className="input-f" type="number" inputMode="decimal" placeholder="200" /></div>
+            <div>
+              <label className="label-f">المحصول الحالي</label>
               <div className="flex flex-wrap gap-2">
-                {['بطاطا', 'قمح', 'بصل', 'خضار'].map(c => (
-                  <button key={c} onClick={() => setCrop(c)} className={`px-3 py-2 rounded-xl text-sm font-bold border transition-all ${crop === c ? 'bg-farm-green border-farm-green text-farm-dark' : 'bg-farm-elevated border-farm-border text-farm-dim'}`}>
-                    {CROP_ICONS[c]} {c}
-                  </button>
+                {CROPS.slice(0, 6).map(c => (
+                  <button key={c} onClick={() => setCrop(crop === c ? '' : c)} className={`chip ${crop === c ? 'chip-on' : 'chip-off'}`}>{cropIcon(c)} {c}</button>
                 ))}
               </div>
             </div>
             <div><label className="label-f">الموقع</label><input value={location} onChange={e => setLocation(e.target.value)} className="input-f" placeholder="زحلة - شمال" /></div>
             <div className="flex gap-3 pt-2">
-              <button onClick={addLand} disabled={saving} className="btn-green flex-1">{saving ? 'جاري...' : 'إضافة'}</button>
-              <button onClick={() => setShowAdd(false)} className="px-5 py-3 text-farm-dim font-bold text-sm">إلغاء</button>
+              <button onClick={addLand} disabled={saving || !name.trim() || !size} className="btn-green flex-1">{saving ? 'جاري...' : 'إضافة'}</button>
+              <button onClick={() => setShowAdd(false)} className="btn-ghost">إلغاء</button>
             </div>
           </div>
         </div>

@@ -37,7 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               `flex flex-col items-center gap-0.5 px-4 py-1 transition-all duration-200 ${n.accent ? '' : isActive ? 'text-farm-green' : 'text-farm-dim hover:text-farm-steel'}`
             }>
               {n.accent ? (
-                <div className="w-13 h-13 -mt-6 rounded-full bg-gradient-to-br from-farm-green to-emerald-400 flex items-center justify-center shadow-xl shadow-farm-green/30 hover:shadow-farm-green/50 transition-all duration-300 active:scale-90"
+                <div className="-mt-6 rounded-full bg-gradient-to-br from-farm-green to-emerald-400 flex items-center justify-center shadow-xl shadow-farm-green/30 hover:shadow-farm-green/50 transition-all duration-300 active:scale-90"
                   style={{ width: 52, height: 52 }}>
                   <n.icon size={24} className="text-farm-dark" strokeWidth={2.5} />
                 </div>

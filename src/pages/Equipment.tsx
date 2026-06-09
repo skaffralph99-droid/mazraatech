@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Plus, Wrench, AlertTriangle, CheckCircle } from 'lucide-react'
 import { format } from 'date-fns'
+import { money } from '../lib/i18n'
 
 const ICONS: Record<string, string> = { tractor: '🚜', sprayer: '🧴', generator: '⚡', truck: '🚛' }
 const TYPE_COLORS: Record<string, string> = { tractor: '#f59e0b', sprayer: '#8b5cf6', generator: '#ef4444', truck: '#3b82f6' }
@@ -40,7 +41,7 @@ export default function Equipment() {
       <div className="animate-fade-up">
         <div className="flex items-center gap-2 mb-1"><Wrench size={16} className="text-amber-400" /><p className="text-farm-dim text-[10px] font-bold tracking-wider">إدارة المعدات</p></div>
         <h1 className="text-farm-steel text-2xl font-black">المعدات</h1>
-        <p className="text-farm-dim text-xs mt-0.5">{equipment.length} قطعة · إجمالي الصيانة: ${totalMaintCost.toLocaleString()}</p>
+        <p className="text-farm-dim text-xs mt-0.5">{equipment.length} قطعة · إجمالي الصيانة: {money(totalMaintCost)}</p>
       </div>
 
       {equipment.map((eq, i) => {
@@ -65,16 +66,16 @@ export default function Equipment() {
                 )}
               </div>
             </div>
-            {totalRepairCost > 0 && <p className="text-farm-dim text-[10px] mt-3">إجمالي الصيانة: <span className="text-red-400 font-bold">${totalRepairCost.toLocaleString()}</span> · {eqMaint.length} عملية</p>}
+            {totalRepairCost > 0 && <p className="text-farm-dim text-[10px] mt-3">إجمالي الصيانة: <span className="text-red-400 font-bold">{money(totalRepairCost)}</span> · {eqMaint.length} عملية</p>}
             {eqMaint.length > 0 && (
               <div className="mt-3 space-y-1.5">
                 {eqMaint.slice(0, 3).map(m => (
                   <div key={m.id} className="flex justify-between items-center text-xs bg-farm-elevated rounded-xl px-3 py-2.5">
                     <div>
                       <span className="text-farm-steel font-bold">{m.description}</span>
-                      <span className="text-farm-dim mr-2"> · {m.mechanic ?? ''} · {format(new Date(m.date), 'dd/MM')}</span>
+                      <span className="text-farm-dim mr-2"> · {[m.mechanic, format(new Date(m.date), 'dd/MM')].filter(Boolean).join(' · ')}</span>
                     </div>
-                    <span className="text-red-400 font-black">${Number(m.cost).toLocaleString()}</span>
+                    <span className="text-red-400 font-black">{money(m.cost)}</span>
                   </div>
                 ))}
               </div>
@@ -91,11 +92,11 @@ export default function Equipment() {
           <div className="card w-full max-w-sm space-y-4 animate-scale-in" onClick={e => e.stopPropagation()}>
             <h2 className="text-farm-steel font-black text-lg flex items-center gap-2"><Wrench size={18} className="text-amber-400" /> صيانة — {selected?.name}</h2>
             <div><label className="label-f">الوصف *</label><input value={desc} onChange={e => setDesc(e.target.value)} className="input-f" placeholder="تبديل فلتر زيت" autoFocus /></div>
-            <div><label className="label-f">التكلفة ($) *</label><input value={cost} onChange={e => setCost(e.target.value)} className="input-f" type="number" placeholder="150" /></div>
+            <div><label className="label-f">التكلفة ($) *</label><input value={cost} onChange={e => setCost(e.target.value)} className="input-f" type="number" inputMode="decimal" placeholder="150" /></div>
             <div><label className="label-f">الميكانيكي</label><input value={mechanic} onChange={e => setMechanic(e.target.value)} className="input-f" placeholder="اسم الميكانيكي" /></div>
             <div className="flex gap-3 pt-2">
-              <button onClick={addMaintenance} disabled={saving} className="btn-green flex-1">{saving ? 'جاري...' : 'حفظ'}</button>
-              <button onClick={() => setShowAdd(false)} className="px-5 py-3 text-farm-dim font-bold text-sm">إلغاء</button>
+              <button onClick={addMaintenance} disabled={saving || !desc.trim() || !cost} className="btn-green flex-1">{saving ? 'جاري...' : 'حفظ'}</button>
+              <button onClick={() => setShowAdd(false)} className="btn-ghost">إلغاء</button>
             </div>
           </div>
         </div>

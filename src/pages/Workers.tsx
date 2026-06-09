@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Plus, User, Users, DollarSign } from 'lucide-react'
+import { ArrowRight, Plus, User, Users } from 'lucide-react'
 import { format } from 'date-fns'
+import { money } from '../lib/i18n'
 
 const ROLE_LABELS: Record<string, string> = { laborer: 'عامل', driver: 'سائق', foreman: 'مشرف', mechanic: 'ميكانيكي' }
 const ROLE_COLORS: Record<string, string> = { laborer: '#3b82f6', driver: '#f59e0b', foreman: '#8b5cf6', mechanic: '#ef4444' }
@@ -50,7 +51,7 @@ export default function Workers() {
         <div>
           <div className="flex items-center gap-2 mb-1"><Users size={16} className="text-purple-400" /><p className="text-farm-dim text-[10px] font-bold tracking-wider">إدارة العمال</p></div>
           <h1 className="text-farm-steel text-2xl font-black">العمال</h1>
-          <p className="text-farm-dim text-xs mt-0.5">{workers.length} عامل · إجمالي الأجور: ${totalPaidAll.toLocaleString()}</p>
+          <p className="text-farm-dim text-xs mt-0.5">{workers.length} عامل · إجمالي الأجور: {money(totalPaidAll)}</p>
         </div>
         <button onClick={() => setShowAdd(true)} className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30 active:scale-90 transition-all">
           <Plus size={22} className="text-white" />
@@ -72,11 +73,11 @@ export default function Workers() {
                 <p className="text-farm-steel font-bold">{w.name}</p>
                 <p className="text-farm-dim text-xs flex items-center gap-2">
                   <span className="px-2 py-0.5 rounded-full text-[9px] font-bold" style={{ background: color + '20', color }}>{ROLE_LABELS[w.role] ?? w.role}</span>
-                  <span><DollarSign size={10} className="inline" />{w.daily_rate}/يوم</span>
+                  <span>{money(w.daily_rate)}/يوم</span>
                 </p>
               </div>
               <div className="text-left">
-                {totalPaid > 0 && <p className="text-farm-steel font-black text-sm">${totalPaid.toLocaleString()}</p>}
+                {totalPaid > 0 && <p className="text-farm-steel font-black text-sm">{money(totalPaid)}</p>}
                 {totalDays > 0 && <p className="text-farm-dim text-[10px]">{totalDays} يوم</p>}
               </div>
             </div>
@@ -103,10 +104,10 @@ export default function Workers() {
                 ))}
               </div>
             </div>
-            <div><label className="label-f">الأجر اليومي ($)</label><input value={wRate} onChange={e => setWRate(e.target.value)} className="input-f" type="number" /></div>
+            <div><label className="label-f">الأجر اليومي ($)</label><input value={wRate} onChange={e => setWRate(e.target.value)} className="input-f" type="number" inputMode="decimal" /></div>
             <div className="flex gap-3 pt-2">
-              <button onClick={addWorker} disabled={saving} className="btn-green flex-1">{saving ? 'جاري...' : 'إضافة'}</button>
-              <button onClick={() => setShowAdd(false)} className="px-5 py-3 text-farm-dim font-bold text-sm">إلغاء</button>
+              <button onClick={addWorker} disabled={saving || !wName.trim()} className="btn-green flex-1">{saving ? 'جاري...' : 'إضافة'}</button>
+              <button onClick={() => setShowAdd(false)} className="btn-ghost">إلغاء</button>
             </div>
           </div>
         </div>
@@ -117,7 +118,7 @@ export default function Workers() {
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowLog(null)}>
           <div className="card w-full max-w-sm space-y-4 animate-scale-in" onClick={e => e.stopPropagation()}>
             <h2 className="text-farm-steel font-black text-lg">تسجيل عمل — {showLog.name}</h2>
-            <p className="text-farm-dim text-xs">${showLog.daily_rate}/يوم</p>
+            <p className="text-farm-dim text-xs">{money(showLog.daily_rate)}/يوم</p>
             <div>
               <label className="label-f">الأرض *</label>
               <div className="flex flex-wrap gap-2">
@@ -126,15 +127,15 @@ export default function Workers() {
                 ))}
               </div>
             </div>
-            <div><label className="label-f">عدد الأيام</label><input value={logDays} onChange={e => setLogDays(e.target.value)} className="input-f" type="number" step="0.5" /></div>
+            <div><label className="label-f">عدد الأيام</label><input value={logDays} onChange={e => setLogDays(e.target.value)} className="input-f" type="number" inputMode="decimal" step="0.5" /></div>
             <div><label className="label-f">المهمة</label><input value={logTask} onChange={e => setLogTask(e.target.value)} className="input-f" placeholder="حصاد، تنظيف، زراعة..." /></div>
             <div className="bg-farm-green/10 border border-farm-green/30 rounded-xl p-3 text-center">
               <p className="text-farm-dim text-[10px]">المبلغ</p>
-              <p className="text-farm-green text-2xl font-black">${((parseFloat(logDays) || 0) * showLog.daily_rate).toLocaleString()}</p>
+              <p className="text-farm-green text-2xl font-black">{money((parseFloat(logDays) || 0) * showLog.daily_rate)}</p>
             </div>
             <div className="flex gap-3 pt-1">
-              <button onClick={addLog} disabled={saving} className="btn-green flex-1">{saving ? 'جاري...' : 'حفظ'}</button>
-              <button onClick={() => setShowLog(null)} className="px-5 py-3 text-farm-dim font-bold text-sm">إلغاء</button>
+              <button onClick={addLog} disabled={saving || !logLand} className="btn-green flex-1">{saving ? 'جاري...' : 'حفظ'}</button>
+              <button onClick={() => setShowLog(null)} className="btn-ghost">إلغاء</button>
             </div>
           </div>
         </div>

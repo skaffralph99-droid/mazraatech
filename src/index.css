@@ -1,79 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
-
 @layer base {
+  * { -webkit-tap-highlight-color: transparent; }
   body { font-family: 'Tajawal', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
-  input, select, textarea { direction: rtl; font-family: 'Tajawal', sans-serif; }
+  input, select, textarea, button { font-family: 'Tajawal', sans-serif; }
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 }
 
 @layer components {
   .card {
     @apply bg-farm-card border border-farm-border/60 rounded-2xl p-4;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
   }
   .input-f {
     @apply w-full bg-farm-elevated border border-farm-border rounded-xl px-4 py-3 text-farm-steel text-sm transition-all duration-200;
   }
-  .input-f:focus {
-    @apply border-farm-green outline-none;
-    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.15);
-  }
-  .label-f { @apply block text-farm-dim text-xs font-bold mb-1.5 tracking-wide; }
+  .input-f:focus { @apply border-farm-green outline-none; box-shadow: 0 0 0 3px rgba(74,222,128,0.12); }
+  .input-f::placeholder { @apply text-farm-dim/60; }
+  .label-f { @apply block text-farm-dim text-xs font-bold mb-2 tracking-wide; }
   .btn-green {
-    @apply w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200;
-    background: linear-gradient(135deg, #4ade80, #22c55e, #16a34a);
-    color: #0a1a0a;
+    @apply w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2;
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    color: #08140a;
   }
   .btn-green:active { transform: scale(0.97); }
   .btn-green:disabled { opacity: 0.5; }
-  .section-title { @apply text-farm-dim text-xs font-bold tracking-widest uppercase mb-3; }
+  .btn-ghost { @apply px-5 py-3 text-farm-dim font-bold text-sm rounded-xl hover:text-farm-steel hover:bg-farm-elevated transition-all; }
+  .section-title { @apply text-farm-dim text-[11px] font-bold tracking-widest uppercase mb-3; }
+  .chip { @apply px-4 py-2.5 rounded-xl text-sm font-bold border transition-all duration-200 active:scale-95; }
+  .chip-on { @apply bg-farm-green border-farm-green text-farm-dark; box-shadow: 0 4px 14px rgba(74,222,128,0.25); }
+  .chip-off { @apply bg-farm-card border-farm-border text-farm-dim hover:border-farm-green/40; }
 }
 
 /* Animations */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideRight { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
 @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-@keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes barGrow { from { width: 0; } }
-@keyframes glowPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.2); } 50% { box-shadow: 0 0 30px 8px rgba(74, 222, 128, 0.1); } }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes barGrow { from { width: 0 !important; } }
+@keyframes glowPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.15); } 50% { box-shadow: 0 0 26px 6px rgba(74,222,128,0.1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
 .animate-fade-in { animation: fadeIn 0.4s ease-out both; }
-.animate-slide-right { animation: slideRight 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-scale-in { animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slide-right { animation: slideRight 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-scale-in { animation: scaleIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-glow { animation: glowPulse 2.5s ease-in-out infinite; }
-.animate-bar { animation: barGrow 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-count { animation: countUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-bar { animation: barGrow 0.9s cubic-bezier(0.16,1,0.3,1) both; }
+.spinner { animation: spin 0.7s linear infinite; }
 
-.delay-1 { animation-delay: 0.06s; } .delay-2 { animation-delay: 0.12s; }
-.delay-3 { animation-delay: 0.18s; } .delay-4 { animation-delay: 0.24s; }
-.delay-5 { animation-delay: 0.3s; } .delay-6 { animation-delay: 0.36s; }
-.delay-7 { animation-delay: 0.42s; } .delay-8 { animation-delay: 0.48s; }
-.delay-9 { animation-delay: 0.54s; } .delay-10 { animation-delay: 0.6s; }
+.delay-1{animation-delay:.05s}.delay-2{animation-delay:.1s}.delay-3{animation-delay:.15s}.delay-4{animation-delay:.2s}.delay-5{animation-delay:.25s}.delay-6{animation-delay:.3s}.delay-7{animation-delay:.35s}.delay-8{animation-delay:.4s}.delay-9{animation-delay:.45s}.delay-10{animation-delay:.5s}
 
-.text-gradient { background: linear-gradient(135deg, #4ade80, #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.glass { background: rgba(30, 36, 25, 0.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.text-gradient { background: linear-gradient(135deg, #4ade80, #2dd4bf); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.glass { background: rgba(20,24,16,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 
-/* KPI gradient cards */
-.kpi-green { background: linear-gradient(135deg, rgba(74,222,128,0.12), rgba(34,197,94,0.05)); border-color: rgba(74,222,128,0.25); }
-.kpi-red { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(220,38,38,0.05)); border-color: rgba(239,68,68,0.25); }
-.kpi-blue { background: linear-gradient(135deg, rgba(96,165,250,0.12), rgba(59,130,246,0.05)); border-color: rgba(96,165,250,0.25); }
-.kpi-amber { background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(245,158,11,0.05)); border-color: rgba(245,158,11,0.25); }
-.kpi-purple { background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(139,92,246,0.05)); border-color: rgba(139,92,246,0.25); }
-
-/* Category colors */
-.cat-mazout { --cat: #f97316; } .cat-seeds { --cat: #22c55e; }
-.cat-fertilizer { --cat: #8b5cf6; } .cat-pesticides { --cat: #ec4899; }
-.cat-workers { --cat: #3b82f6; } .cat-tractor { --cat: #f59e0b; }
-.cat-water { --cat: #06b6d4; } .cat-transport { --cat: #6366f1; }
-.cat-storage { --cat: #14b8a6; } .cat-other { --cat: #78716c; }
+.kpi-green { background: linear-gradient(135deg, rgba(74,222,128,0.12), rgba(34,197,94,0.04)); border-color: rgba(74,222,128,0.25); }
+.kpi-red { background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(220,38,38,0.04)); border-color: rgba(239,68,68,0.25); }
+.kpi-blue { background: linear-gradient(135deg, rgba(96,165,250,0.12), rgba(59,130,246,0.04)); border-color: rgba(96,165,250,0.25); }
+.kpi-amber { background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.25); }
+.kpi-purple { background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(139,92,246,0.04)); border-color: rgba(139,92,246,0.25); }
 
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
